@@ -260,17 +260,21 @@ const rule: GraphQLESLintRule<[NamingConventionRuleConfig]> = {
       }
     };
 
+    const checkUnderscore = (errorMessage: string) => (node: GraphQLESTreeNode<NameNode>) => {
+      const { parent } = node as any;
+      const isFieldNode = parent?.kind === Kind.FIELD;
+      if ((isFieldNode && parent.alias) || !isFieldNode) {
+        context.report({ node, message: errorMessage });
+      }
+    };
+
     const listeners: GraphQLESLintRuleListener = {};
 
     if (!options.allowLeadingUnderscore) {
-      listeners['Name[value=/^_/]'] = (node: GraphQLESTreeNode<NameNode>) => {
-        context.report({ node, message: 'Leading underscores are not allowed' });
-      };
+      listeners['Name[value=/^_/]'] = checkUnderscore('Leading underscores are not allowed');
     }
     if (!options.allowTrailingUnderscore) {
-      listeners['Name[value=/_$/]'] = (node: GraphQLESTreeNode<NameNode>) => {
-        context.report({ node, message: 'Trailing underscores are not allowed' });
-      };
+      listeners['Name[value=/_$/]'] = checkUnderscore('Trailing underscores are not allowed');
     }
 
     const selectors = new Set(

@@ -119,6 +119,7 @@ ruleTester.runGraphQLTests('naming-convention', rule, {
       code: 'query { foo }',
       options: [{ overrides: { OperationDefinition: { style: 'PascalCase' } } }],
     },
+    '{ test { __typename ok__ } }',
   ],
   invalid: [
     {
@@ -342,6 +343,19 @@ ruleTester.runGraphQLTests('naming-convention', rule, {
         { message: 'Fragment "TestFragment" should not have "Fragment" suffix' },
         { message: 'Fragment "FragmentTest" should not have "Fragment" prefix' },
       ],
+    },
+    {
+      code: /* GraphQL */ `
+        {
+          test {
+            __badAlias: foo
+            badAlias__: bar
+            __ok
+            ok__
+          }
+        }
+      `,
+      errors: [{ message: 'Leading underscores are not allowed' }, { message: 'Trailing underscores are not allowed' }],
     },
   ],
 });
