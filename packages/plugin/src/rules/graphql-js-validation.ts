@@ -8,7 +8,7 @@ import { requireGraphQLSchemaFromContext, requireSiblingsOperations } from '../u
 import { GraphQLESTreeNode } from '../estree-parser';
 
 function extractRuleName(stack?: string): string | null {
-  const match = (stack || '').match(/validation[/\\\\]rules[/\\\\](.*?)\.js:/) || [];
+  const match = (stack || '').match(/validation[/\\]rules[/\\](.*?)\.js:/) || [];
   return match[1] || null;
 }
 

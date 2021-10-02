@@ -58,6 +58,7 @@ export type RuleDocsInfo<T> = Rule.RuleMetaData & {
       code: string;
       usage?: T;
     }[];
+    optionsForConfig?: T;
   };
 };
 
@@ -65,3 +66,5 @@ export type GraphQLESLintRule<Options = any[], WithTypeInfo extends boolean = fa
   create(context: GraphQLESLintRuleContext<Options>): GraphQLESLintRuleListener<WithTypeInfo>;
   meta: Rule.RuleMetaData & RuleDocsInfo<Options>;
 };
+
+export type ValueOf<T> = T[keyof T];

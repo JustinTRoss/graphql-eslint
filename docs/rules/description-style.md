@@ -43,7 +43,7 @@ The array object has the following properties:
 
 This element must be one of the following enum values:
 
-* `block`
-* `inline`
+- `block`
+- `inline`
 
 Default: `"inline"`

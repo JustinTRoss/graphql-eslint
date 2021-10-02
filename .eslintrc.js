@@ -10,6 +10,7 @@ module.exports = {
     'no-prototype-builtins': 'off',
     'no-restricted-globals': ['error', { name: 'isNaN', message: 'Use Number.isNaN instead' }],
     'no-useless-constructor': 'off',
+    'object-shorthand': ['error', 'always'],
     'no-unused-vars': 'off', // disable base rule as it can report incorrect errors
     '@typescript-eslint/no-unused-vars': ['warn', { args: 'none' }],
     '@typescript-eslint/no-use-before-define': 'off',
@@ -24,6 +25,8 @@ module.exports = {
     '@typescript-eslint/ban-types': 'off',
     'unicorn/prefer-array-some': 'error',
     'unicorn/prefer-includes': 'error',
+    'unicorn/no-useless-fallback-in-spread': 'error',
+    'unicorn/better-regex': 'error',
   },
   overrides: [
     {

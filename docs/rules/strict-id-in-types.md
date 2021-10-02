@@ -74,7 +74,7 @@ The object is an array with all elements of the type `string`.
 
 Default:
 
-```
+```json
 [
   "id"
 ]
@@ -86,7 +86,7 @@ The object is an array with all elements of the type `string`.
 
 Default:
 
-```
+```json
 [
   "ID"
 ]
@@ -104,7 +104,7 @@ The object is an array with all elements of the type `string`.
 
 Default:
 
-```
+```json
 []
 ```
 
@@ -116,6 +116,6 @@ The object is an array with all elements of the type `string`.
 
 Default:
 
-```
+```json
 []
 ```
