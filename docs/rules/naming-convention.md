@@ -98,7 +98,7 @@ May contain the following `ASTNode` names:
 - `UnionTypeDefinition`
 - `VariableDefinition`
 
-For example pattern property `FieldDefinition[parent.name.value=Query]` will match only fields for type Query
+For example: pattern property `FieldDefinition[parent.name.value=Query]` will match only fields for type Query
 
 Pattern properties of the `overrides` object:
 

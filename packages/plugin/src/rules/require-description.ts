@@ -1,60 +1,37 @@
-import { GraphQLESLintRule, GraphQLESLintRuleContext } from '../types';
+import { ASTKindToNode, Kind } from 'graphql';
+import { GraphQLESLintRule, ValueOf } from '../types';
+import { TYPES_KINDS } from '../utils';
 import { GraphQLESTreeNode } from '../estree-parser/estree-ast';
-import { ASTNode, Kind, StringValueNode } from 'graphql';
 
 const REQUIRE_DESCRIPTION_ERROR = 'REQUIRE_DESCRIPTION_ERROR';
-const DESCRIBABLE_NODES = [
-  Kind.SCHEMA_DEFINITION,
-  Kind.OBJECT_TYPE_DEFINITION,
+
+const ALLOWED_KINDS = [
+  ...TYPES_KINDS,
   Kind.FIELD_DEFINITION,
   Kind.INPUT_VALUE_DEFINITION,
-  Kind.INTERFACE_TYPE_DEFINITION,
-  Kind.UNION_TYPE_DEFINITION,
-  Kind.ENUM_TYPE_DEFINITION,
   Kind.ENUM_VALUE_DEFINITION,
-  Kind.INPUT_OBJECT_TYPE_DEFINITION,
   Kind.DIRECTIVE_DEFINITION,
 ];
-type RequireDescriptionRuleConfig = [{ on: typeof DESCRIBABLE_NODES }];
 
-function verifyRule(
-  context: GraphQLESLintRuleContext<RequireDescriptionRuleConfig>,
-  node: GraphQLESTreeNode<ASTNode> & {
-    readonly description?: GraphQLESTreeNode<StringValueNode>;
-  }
-) {
-  if (node) {
-    if (!node.description || !node.description.value || node.description.value.trim().length === 0) {
-      context.report({
-        loc: {
-          start: {
-            line: node.loc.start.line,
-            column: node.loc.start.column - 1,
-          },
-          end: {
-            line: node.loc.end.line,
-            column: node.loc.end.column,
-          },
-        },
-        messageId: REQUIRE_DESCRIPTION_ERROR,
-        data: {
-          nodeType: node.kind,
-        },
-      });
-    }
-  }
-}
+type AllowedKind = typeof ALLOWED_KINDS[number];
 
-const rule: GraphQLESLintRule<RequireDescriptionRuleConfig> = {
+type RequireDescriptionRuleConfig = {
+  types?: boolean;
+  overrides?: {
+    [key in AllowedKind]?: boolean;
+  };
+};
+
+const rule: GraphQLESLintRule<[RequireDescriptionRuleConfig]> = {
   meta: {
     docs: {
       category: 'Best Practices',
-      description: `Enforce descriptions in your type definitions.`,
-      url: `https://github.com/dotansimha/graphql-eslint/blob/master/docs/rules/require-description.md`,
+      description: 'Enforce descriptions in your type definitions.',
+      url: 'https://github.com/dotansimha/graphql-eslint/blob/master/docs/rules/require-description.md',
       examples: [
         {
           title: 'Incorrect',
-          usage: [{ on: ['ObjectTypeDefinition', 'FieldDefinition'] }],
+          usage: [{ types: true, overrides: { FieldDefinition: true } }],
           code: /* GraphQL */ `
             type someTypeName {
               name: String
@@ -63,7 +40,7 @@ const rule: GraphQLESLintRule<RequireDescriptionRuleConfig> = {
         },
         {
           title: 'Correct',
-          usage: [{ on: ['ObjectTypeDefinition', 'FieldDefinition'] }],
+          usage: [{ types: true, overrides: { FieldDefinition: true } }],
           code: /* GraphQL */ `
             """
             Some type description
@@ -77,35 +54,77 @@ const rule: GraphQLESLintRule<RequireDescriptionRuleConfig> = {
           `,
         },
       ],
+      optionsForConfig: [
+        {
+          types: true,
+          overrides: {
+            [Kind.DIRECTIVE_DEFINITION]: true,
+          },
+        },
+      ],
     },
     type: 'suggestion',
     messages: {
-      [REQUIRE_DESCRIPTION_ERROR]: `Description is required for nodes of type "{{ nodeType }}"`,
+      [REQUIRE_DESCRIPTION_ERROR]: 'Description is required for nodes of type "{{ nodeType }}"',
     },
     schema: {
       type: 'array',
-      additionalItems: false,
       minItems: 1,
       maxItems: 1,
       items: {
         type: 'object',
-        require: ['on'],
+        additionalProperties: false,
+        minProperties: 1,
         properties: {
-          on: {
-            type: 'array',
-            minItems: 1,
-            additionalItems: false,
-            items: {
-              type: 'string',
-              enum: DESCRIBABLE_NODES,
-            },
+          types: {
+            type: 'boolean',
+            description: `Includes:\n\n${TYPES_KINDS.map(kind => `- \`${kind}\``).join('\n')}`,
+          },
+          overrides: {
+            type: 'object',
+            description: 'Configuration for precise `ASTNode`',
+            additionalProperties: false,
+            properties: Object.fromEntries(ALLOWED_KINDS.map(kind => [kind, { type: 'boolean' }])),
           },
         },
       },
     },
   },
   create(context) {
-    return Object.fromEntries(context.options[0].on.map(optionKey => [optionKey, node => verifyRule(context, node)]));
+    const { types, overrides = {} } = context.options[0];
+
+    const kinds: Set<string> = new Set(types ? TYPES_KINDS : []);
+    for (const [kind, isEnabled] of Object.entries(overrides)) {
+      if (isEnabled) {
+        kinds.add(kind);
+      } else {
+        kinds.delete(kind);
+      }
+    }
+
+    const selector = [...kinds].join(',');
+    type AllowedKindToNode = Pick<ASTKindToNode, AllowedKind>;
+    return {
+      [selector](node: GraphQLESTreeNode<ValueOf<AllowedKindToNode>>) {
+        const description = node.description?.value || '';
+        if (description.trim().length === 0) {
+          const { start, end } = node.loc;
+          context.report({
+            loc: {
+              start: {
+                line: start.line,
+                column: start.column - 1,
+              },
+              end,
+            },
+            messageId: REQUIRE_DESCRIPTION_ERROR,
+            data: {
+              nodeType: node.kind,
+            },
+          });
+        }
+      },
+    };
   },
 };
 
